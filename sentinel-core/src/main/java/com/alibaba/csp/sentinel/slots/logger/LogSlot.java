@@ -27,6 +27,7 @@ import com.alibaba.csp.sentinel.spi.SpiOrder;
  * A {@link com.alibaba.csp.sentinel.slotchain.ProcessorSlot} that is response for logging block exceptions
  * to provide concrete logs for troubleshooting.
  */
+// 打印异常日志
 @SpiOrder(-8000)
 public class LogSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 

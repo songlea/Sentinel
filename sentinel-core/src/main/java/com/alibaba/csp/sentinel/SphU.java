@@ -82,6 +82,7 @@ public class SphU {
      * @throws BlockException if the block criteria is met (e.g. metric exceeded the threshold of any rules)
      */
     public static Entry entry(String name) throws BlockException {
+        // 默认为 出口流量类型，单位统计数为1
         return Env.sph.entry(name, EntryType.OUT, 1, OBJECTS0);
     }
 

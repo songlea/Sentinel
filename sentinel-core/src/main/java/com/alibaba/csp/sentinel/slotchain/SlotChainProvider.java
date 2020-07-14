@@ -36,13 +36,20 @@ public final class SlotChainProvider {
      * @return new created slot chain
      */
     public static ProcessorSlotChain newSlotChain() {
+        // 判断是否已经初始化过
         if (slotChainBuilder != null) {
             return slotChainBuilder.build();
         }
 
         // Resolve the slot chain builder SPI.
+        /*
+        SPI的全名为Service Provider Interface.这个是针对厂商或者插件的.
+            主要用到ServiceLoader这个类，ServiceLoader通过读取resources/META-INF/services/com.xxx.xxx.xxxService文件下的xxxService的spi实现类，
+            通过反射获取对应类实例，并调用对应方法。
+         */
         slotChainBuilder = SpiLoader.loadFirstInstanceOrDefault(SlotChainBuilder.class, DefaultSlotChainBuilder.class);
 
+        // 加载失败则使用默认 插槽链
         if (slotChainBuilder == null) {
             // Should not go through here.
             RecordLog.warn("[SlotChainProvider] Wrong state when resolving slot chain builder, using default");
@@ -51,6 +58,7 @@ public final class SlotChainProvider {
             RecordLog.info("[SlotChainProvider] Global slot chain builder resolved: "
                 + slotChainBuilder.getClass().getCanonicalName());
         }
+        // 构建完成
         return slotChainBuilder.build();
     }
 

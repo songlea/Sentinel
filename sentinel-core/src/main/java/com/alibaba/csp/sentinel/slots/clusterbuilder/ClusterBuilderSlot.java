@@ -45,6 +45,7 @@ import com.alibaba.csp.sentinel.spi.SpiOrder;
  *
  * @author jialiang.linjl
  */
+// 具有相同资源名称的共享一个ClusterNode
 @SpiOrder(-9000)
 public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
@@ -76,6 +77,7 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
     public void entry(Context context, ResourceWrapper resourceWrapper, DefaultNode node, int count,
                       boolean prioritized, Object... args)
         throws Throwable {
+        // 判断本资源是否已经初始化过clusterNode
         if (clusterNode == null) {
             synchronized (lock) {
                 if (clusterNode == null) {
@@ -89,12 +91,14 @@ public class ClusterBuilderSlot extends AbstractLinkedProcessorSlot<DefaultNode>
                 }
             }
         }
+        // 给相同资源的DefaultNode设置一样的ClusterNode
         node.setClusterNode(clusterNode);
 
         /*
          * if context origin is set, we should get or create a new {@link Node} of
          * the specific origin.
          */
+        // 如果有来源则新建一个来源Node
         if (!"".equals(context.getOrigin())) {
             Node originNode = node.getClusterNode().getOrCreateOriginNode(context.getOrigin());
             context.getCurEntry().setOriginNode(originNode);

@@ -46,12 +46,14 @@ public class ContextTest {
         fillContext();
         try {
             String contextName = "abc";
+            // 创建一个名称为abc，来源为bcd 的上下文Context
             ContextUtil.enter(contextName, "bcd");
             Context curContext = ContextUtil.getContext();
             assertNotEquals(contextName, curContext.getName());
             assertTrue(curContext instanceof NullContext);
             assertEquals("", curContext.getOrigin());
         } finally {
+            // 清除上下文
             ContextUtil.exit();
             resetContextMap();
         }

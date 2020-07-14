@@ -49,7 +49,7 @@ public class CtSph implements Sph {
      * {@link ProcessorSlotChain}, no matter in which {@link Context}.
      */
     private static volatile Map<ResourceWrapper, ProcessorSlotChain> chainMap
-        = new HashMap<ResourceWrapper, ProcessorSlotChain>();
+            = new HashMap<ResourceWrapper, ProcessorSlotChain>();
 
     private static final Object LOCK = new Object();
 
@@ -110,43 +110,57 @@ public class CtSph implements Sph {
     }
 
     private AsyncEntry asyncEntryInternal(ResourceWrapper resourceWrapper, int count, Object... args)
-        throws BlockException {
+            throws BlockException {
         return asyncEntryWithPriorityInternal(resourceWrapper, count, false, args);
     }
 
+    /*
+        1、获取上下文对象，如果上下文对象还未初始化，则使用默认名称初始化。
+        2、判断全局开关
+        3、根据给定的资源生成插槽链，插槽链是跟资源相关的，Sentinel最关键的逻辑也都在各个插槽中。初始化的逻辑在lookProcessChain(resourceWrapper)中
+        4、依顺序执行每个插槽逻辑
+     */
     private Entry entryWithPriority(ResourceWrapper resourceWrapper, int count, boolean prioritized, Object... args)
-        throws BlockException {
+            throws BlockException {
+        // 获取当前线程上下文对象
         Context context = ContextUtil.getContext();
         if (context instanceof NullContext) {
             // The {@link NullContext} indicates that the amount of context has exceeded the threshold,
             // so here init the entry only. No rule checking will be done.
+            // 上下文名称对应的入口节点是否已经超过阈值2000，超过则会返回空 CtEntry
             return new CtEntry(resourceWrapper, null, context);
         }
 
         if (context == null) {
             // Using default context.
+            // 如果没有指定上下文名称，则使用默认名称，也就是默认入口节点
             context = InternalContextUtil.internalEnter(Constants.CONTEXT_DEFAULT_NAME);
         }
 
         // Global switch is close, no rule checking will do.
+        // 全局开关
         if (!Constants.ON) {
             return new CtEntry(resourceWrapper, null, context);
         }
 
+        // 生成插槽链
         ProcessorSlot<Object> chain = lookProcessChain(resourceWrapper);
 
         /*
          * Means amount of resources (slot chain) exceeds {@link Constants.MAX_SLOT_CHAIN_SIZE},
          * so no rule checking will be done.
          */
+        // 表示资源(插槽链)超过6000，因此不会进行规则检查。
         if (chain == null) {
             return new CtEntry(resourceWrapper, null, context);
         }
 
         Entry e = new CtEntry(resourceWrapper, chain, context);
         try {
+            // 开始执行插槽链 调用逻辑
             chain.entry(context, resourceWrapper, null, count, prioritized, args);
         } catch (BlockException e1) {
+            // 清除上下文
             e.exit(count, args);
             throw e1;
         } catch (Throwable e1) {
@@ -192,19 +206,22 @@ public class CtSph implements Sph {
      * @return {@link ProcessorSlotChain} of the resource
      */
     ProcessorSlot<Object> lookProcessChain(ResourceWrapper resourceWrapper) {
+        // 根据资源尝试从全局缓存中获取
         ProcessorSlotChain chain = chainMap.get(resourceWrapper);
         if (chain == null) {
             synchronized (LOCK) {
                 chain = chainMap.get(resourceWrapper);
                 if (chain == null) {
                     // Entry size limit.
+                    // 判断资源数是否大于6000
                     if (chainMap.size() >= Constants.MAX_SLOT_CHAIN_SIZE) {
                         return null;
                     }
 
+                    // 初始化插槽链
                     chain = SlotChainProvider.newSlotChain();
                     Map<ResourceWrapper, ProcessorSlotChain> newMap = new HashMap<ResourceWrapper, ProcessorSlotChain>(
-                        chainMap.size() + 1);
+                            chainMap.size() + 1);
                     newMap.putAll(chainMap);
                     newMap.put(resourceWrapper, chain);
                     chainMap = newMap;
@@ -329,14 +346,14 @@ public class CtSph implements Sph {
 
     @Override
     public Entry entryWithPriority(String name, EntryType type, int count, boolean prioritized, Object... args)
-        throws BlockException {
+            throws BlockException {
         StringResourceWrapper resource = new StringResourceWrapper(name, type);
         return entryWithPriority(resource, count, prioritized, args);
     }
 
     @Override
     public Entry entryWithType(String name, int resourceType, EntryType entryType, int count, Object[] args)
-        throws BlockException {
+            throws BlockException {
         return entryWithType(name, resourceType, entryType, count, false, args);
     }
 

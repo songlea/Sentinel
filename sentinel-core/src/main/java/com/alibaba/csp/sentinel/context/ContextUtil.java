@@ -110,35 +110,45 @@ public class ContextUtil {
      * @return The invocation context of the current thread
      */
     public static Context enter(String name, String origin) {
+        // 判断上下文名称是否为默认的名称（sentinel_default_context）是的话直接抛出异常
         if (Constants.CONTEXT_DEFAULT_NAME.equals(name)) {
             throw new ContextNameDefineException(
-                "The " + Constants.CONTEXT_DEFAULT_NAME + " can't be permit to defined!");
+                    "The " + Constants.CONTEXT_DEFAULT_NAME + " can't be permit to defined!");
         }
         return trueEnter(name, origin);
     }
 
+    /*
+        1、根据contextName生成entranceNode,并加入到缓存中,每个ContextName对应一个入口节点entranceNode
+        2、根据contextName和entranceNode初始化上下文,并将上下文对象设置到当前线程中
+        3、每个entranceNode都有共同的父节点,也就是根节点
+     */
     protected static Context trueEnter(String name, String origin) {
+        // 先从ThreadLocal中尝试获取，获取到则直接返回
         Context context = contextHolder.get();
         if (context == null) {
             Map<String, DefaultNode> localCacheNameMap = contextNameNodeMap;
             DefaultNode node = localCacheNameMap.get(name);
             if (node == null) {
+                // 判断缓存中入口节点数量是否大于2000
                 if (localCacheNameMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                     setNullContext();
                     return NULL_CONTEXT;
                 } else {
                     LOCK.lock();
                     try {
+                        // 双重检查
                         node = contextNameNodeMap.get(name);
                         if (node == null) {
                             if (contextNameNodeMap.size() > Constants.MAX_CONTEXT_NAME_SIZE) {
                                 setNullContext();
                                 return NULL_CONTEXT;
                             } else {
+                                // 根据上下文名称生成入口节点（entranceNode）
                                 node = new EntranceNode(new StringResourceWrapper(name, EntryType.IN), null);
-                                // Add entrance node.
+                                // Add entrance node.加入至全局根节点下
                                 Constants.ROOT.addChild(node);
-
+                                // 加入到缓存中
                                 Map<String, DefaultNode> newMap = new HashMap<>(contextNameNodeMap.size() + 1);
                                 newMap.putAll(contextNameNodeMap);
                                 newMap.put(name, node);
@@ -165,7 +175,7 @@ public class ContextUtil {
         // Don't need to be thread-safe.
         if (shouldWarn) {
             RecordLog.warn("[SentinelStatusChecker] WARN: Amount of context exceeds the threshold "
-                + Constants.MAX_CONTEXT_NAME_SIZE + ". Entries in new contexts will NOT take effect!");
+                    + Constants.MAX_CONTEXT_NAME_SIZE + ". Entries in new contexts will NOT take effect!");
             shouldWarn = false;
         }
     }

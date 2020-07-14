@@ -50,6 +50,18 @@ import com.alibaba.csp.sentinel.context.Context;
  * @see Context
  * @see ContextUtil
  */
+/*
+在Sentinel里面，所有的资源都对应一个资源名称(resourceName)，每次资源调用都会创建一个Entry对象，Entry可能通过对主流框架的适配自动创建，也可以
+通过注解的方式或调用 SphU API显式创建，Entry创建的时间，同时也会创建一系列功能插槽(slot chain)，这些插槽有不同的职责，例如默认情况下会创建7个、
+插槽(这里的插槽都是一一对应资源名称的)：
+NodeSelectorSlot：负责收集资源的路径，并将这些资源的调用路径，以树状结构存储起来，用于根据调用路径来限流降级；
+ClusterBuilderSlot：则用于存储资源的统计信息以及调用者信息，例如该资源的 RT, QPS, thread count 等等，这些信息将用作为多维度限流，降级的依据；
+StatisticSlot：则用于记录、统计不同纬度的 runtime 指标监控信息；
+FlowSlot：则用于根据预设的限流规则以及前面 slot 统计的状态，来进行流量控制；
+AuthoritySlot：则根据配置的黑白名单和调用来源信息，来做黑白名单控制；
+DegradeSlot：则通过统计信息以及预设的规则，来做熔断降级；
+SystemSlot： 则通过系统的状态，例如 load1 等，来控制总的入口流量。
+ */
 public abstract class Entry implements AutoCloseable {
 
     private static final Object[] OBJECTS0 = new Object[0];
@@ -104,7 +116,7 @@ public abstract class Entry implements AutoCloseable {
      * Exit this entry. This method should invoke if and only if once at the end of the resource protection.
      *
      * @param count tokens to release.
-     * @param args extra parameters
+     * @param args  extra parameters
      * @throws ErrorEntryFreeException, if {@link Context#getCurEntry()} is not this entry.
      */
     public abstract void exit(int count, Object... args) throws ErrorEntryFreeException;
@@ -113,7 +125,7 @@ public abstract class Entry implements AutoCloseable {
      * Exit this entry.
      *
      * @param count tokens to release.
-     * @param args extra parameters
+     * @param args  extra parameters
      * @return next available entry after exit, that is the parent entry.
      * @throws ErrorEntryFreeException, if {@link Context#getCurEntry()} is not this entry.
      */

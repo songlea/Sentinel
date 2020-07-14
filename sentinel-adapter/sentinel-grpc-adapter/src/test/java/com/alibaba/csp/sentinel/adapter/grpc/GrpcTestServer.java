@@ -19,20 +19,21 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
 import java.io.IOException;
-import java.util.concurrent.Executors;
 
+// 在服务侧，服务端实现服务接口，运行一个 gRPC 服务器来处理客户端调用。gRPC 底层架构会解码传入的请求，执行服务方法，编码服务应答。
 class GrpcTestServer {
 
     private Server server;
 
-    GrpcTestServer() {}
+    GrpcTestServer() {
+    }
 
     void start(int port, boolean shouldIntercept) throws IOException {
         if (server != null) {
             throw new IllegalStateException("Server already running!");
         }
         ServerBuilder<?> serverBuild = ServerBuilder.forPort(port)
-            .addService(new FooServiceImpl());
+                .addService(new FooServiceImpl());
         if (shouldIntercept) {
             serverBuild.intercept(new SentinelGrpcServerInterceptor());
         }

@@ -16,6 +16,7 @@
 package com.alibaba.csp.sentinel.util;
 
 import com.alibaba.csp.sentinel.slotchain.ProcessorSlot;
+import com.alibaba.csp.sentinel.slotchain.ProcessorSlotChain;
 import com.alibaba.csp.sentinel.slotchain.SlotChainBuilder;
 import com.alibaba.csp.sentinel.slots.DefaultSlotChainBuilder;
 import com.alibaba.csp.sentinel.slots.block.authority.AuthoritySlot;
@@ -51,6 +52,9 @@ public class SpiLoaderTest {
         SlotChainBuilder slotChainBuilder = SpiLoader.loadFirstInstance(SlotChainBuilder.class);
         assertNotNull(slotChainBuilder);
         assertTrue(slotChainBuilder instanceof DefaultSlotChainBuilder);
+
+        // test
+        ProcessorSlotChain processorSlotChain = slotChainBuilder.build();
 
         SlotChainBuilder slotChainBuilder2 = SpiLoader.loadFirstInstance(SlotChainBuilder.class);
         // As SERVICE_LOADER_MAP in SpiLoader cached the instance, so they're same instances

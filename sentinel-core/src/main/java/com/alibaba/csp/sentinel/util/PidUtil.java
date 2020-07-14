@@ -29,9 +29,11 @@ public final class PidUtil {
      */
     public static int getPid() {
         // Note: this will trigger local host resolve, which might be slow.
+        // ManagementFactory是一个为我们提供各种获取JVM信息的工厂类,使用ManagementFactory可以获取大量的运行时JVM信息
         String name = ManagementFactory.getRuntimeMXBean().getName();
         return Integer.parseInt(name.split("@")[0]);
     }
 
-    private PidUtil() {}
+    private PidUtil() {
+    }
 }

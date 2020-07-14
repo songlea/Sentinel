@@ -129,6 +129,7 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
     /**
      * {@link DefaultNode}s of the same resource in different context.
      */
+    // 相同的资源但是Context不同，分别新建 DefaultNode，并以ContextName为key
     private volatile Map<String, DefaultNode> map = new HashMap<String, DefaultNode>(10);
 
     @Override
@@ -152,11 +153,13 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
          * The answer is all {@link DefaultNode}s with same resource name share one
          * {@link ClusterNode}. See {@link ClusterBuilderSlot} for detail.
          */
+        // 根据ContextName尝试获取DefaultNode
         DefaultNode node = map.get(context.getName());
         if (node == null) {
             synchronized (this) {
                 node = map.get(context.getName());
                 if (node == null) {
+                    // 初始化DefaultNode，每个Context对应一个
                     node = new DefaultNode(resourceWrapper, null);
                     HashMap<String, DefaultNode> cacheMap = new HashMap<String, DefaultNode>(map.size());
                     cacheMap.putAll(map);
@@ -170,6 +173,7 @@ public class NodeSelectorSlot extends AbstractLinkedProcessorSlot<Object> {
         }
 
         context.setCurNode(node);
+        // 唤醒执行下一个插槽
         fireEntry(context, resourceWrapper, node, count, prioritized, args);
     }
 

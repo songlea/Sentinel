@@ -48,6 +48,7 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
  * @author jialiang.linjl
  * @author Eric Zhao
  */
+// 用于统计实时的调用数据
 @SpiOrder(-7000)
 public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
 
@@ -56,6 +57,7 @@ public class StatisticSlot extends AbstractLinkedProcessorSlot<DefaultNode> {
                       boolean prioritized, Object... args) throws Throwable {
         try {
             // Do some checking.
+            // 先进行后续的check，包括规则的check，黑白名单check
             fireEntry(context, resourceWrapper, node, count, prioritized, args);
 
             // Request passed, add thread count and pass count.

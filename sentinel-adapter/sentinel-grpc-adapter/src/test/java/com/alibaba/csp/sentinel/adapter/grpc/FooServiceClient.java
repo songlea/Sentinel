@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Eric Zhao
  */
+// 在客户侧，客户端有一个存根实现了服务端同样的方法。客户端可以在本地存根调用这些方法，用合适的 protocol buffer 消息类型封装这些参数—
+// gRPC 来负责发送请求给服务端并返回服务端 protocol buffer 响应。
 final class FooServiceClient {
     private final ManagedChannel channel;
     private final FooServiceGrpc.FooServiceBlockingStub blockingStub;
